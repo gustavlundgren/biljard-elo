@@ -1,0 +1,16 @@
+{
+  "name": "client",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "debug": "node index.js"
+  },
+  "author": "Gustav Lundgren",
+  "license": "ISC",
+  "dependencies": {
+    "firebase": "^11.3.0"
+  }
+}
