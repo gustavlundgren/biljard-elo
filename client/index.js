@@ -35,4 +35,4 @@ const login = async (email, password) => {
 };
 
 // Usage example
-login('theolindh05@gmail.com', 'testing');
+login('gustavlundgren23@gmail.com', 'password');

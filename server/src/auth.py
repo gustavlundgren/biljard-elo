@@ -2,7 +2,7 @@ from flask import Blueprint, request, jsonify
 from firebase_admin import auth
 
 auth_blueprint = Blueprint('auth', __name__)
-
+      
 @auth_blueprint.route('/api/auth', methods=['POST'])
 def login():
     data = request.json
