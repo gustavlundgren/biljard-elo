@@ -152,3 +152,4 @@ build/
 
 serviceAccountKey.json
 .flaskenv
+client/firebase-config.js

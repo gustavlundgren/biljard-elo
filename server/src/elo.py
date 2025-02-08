@@ -114,5 +114,3 @@ def process_match(match, history_path, elo_path):
         json.dump(matches, file, indent=4)
         
     players = read_player_data(elo_path)
-
-main()
