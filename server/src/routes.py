@@ -141,8 +141,15 @@ def add_game():
 
 # DELETE
 @routes_blueprint.route('/api/games/delete/<gid>', methods=['DELETE'])
-def delete_game():
-    pass
+def delete_game(gid):
+    try:
+        game_ref = db.collection('games').document(gid)
+        game_ref.delete()
+        
+        return jsonify({'message': 'Successfully deleted game: ' + gid})
+        
+    except Exception as e:
+        return jsonify({'error': str(e)})
 
 # Players
 #GET  
