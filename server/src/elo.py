@@ -1,4 +1,5 @@
 import json
+import math
 from server.src import db
 import os
 
@@ -79,7 +80,19 @@ class EloTracker:
     def process_games(self, games):
         sorted_games = sorted(games, key=lambda game: game.time)
         for m in sorted_games:
+            print("New game")
+            print(m.winner)
+            print(m.loser)
             self.update_elo(m.winner, m.loser)
+            winner = find_key_by_name(m.winner, self.players)
+            loser = find_key_by_name(m.loser, self.players)
+            print("Winners elo")
+            print(self.players[winner][0])
+            print("Loser elo")
+            print(self.players[loser][0])
+            print()
+
+    
     
     #@staticmethod
     def update_elo(self, winner, loser):
@@ -90,32 +103,50 @@ class EloTracker:
         except PlayerDoesNotHaveEloError as err:
             print(err)
             raise CannotUpdateEloError(err.player)
+        expected_winner = 1.0 / (1.0 + math.pow(10, ((loser_elo - winner_elo) / 400.0)))
+        expected_loser = 1.0 / (1.0 + math.pow(10, ((winner_elo - loser_elo) / 400.0)))
 
 
-        expected_winnner = 1.0 / (1.0 + 10.0 ** ((loser_elo - winner_elo) / 400.0))
-        expected_loser   = 1.0 / (1.0 + 10.0 ** ((winner_elo - loser_elo) / 400.0))
+        new_winner_elo = winner_elo + k * (1 - expected_winner)
+        new_loser_elo  = loser_elo  + k * (0 - expected_loser)
 
-        new_winner_elo = winner_elo + k * (1 - expected_winnner)
-        new_loser_elo  = loser_elo  + k * (1 - expected_loser)
+      
 
-        self.players[winner] = new_winner_elo
-        self.players[loser]  = new_loser_elo
+
+
+        winner = find_key_by_name(winner, self.players)
+        loser = find_key_by_name(loser, self.players)
+
+        
+
+        self.players[winner][0] = new_winner_elo
+        self.players[loser][0]  = new_loser_elo
+
+
+    
+  
 
     def get_elo(self, player):
-        if self.players[player]:
-            return self.players[player]
+        doc_id = (find_key_by_name(player, self.players))
+
+        if self.players[doc_id]:
+            return self.players[doc_id][0]
         raise PlayerDoesNotHaveEloError
 
+
+def find_key_by_name(name, data):
+    for key, (_value, person) in data.items():
+        if person == name:
+            return key
 #unsafe
 #do not us 
 def process_game():
     doc_games_ref = db.collection("games")
-    
+        
     games = [doc.to_dict() for doc in doc_games_ref.get()]
 
     verified_games=[]
-    print("ahamdulilah")
-    print(games[0])
+
 
     if games:
         for game in games:
@@ -126,29 +157,27 @@ def process_game():
                     loser = players[1]
                 else:
                     loser = players[0]
-                pass
+                    pass
                 verified_games.append(Game(winner, loser, game['time']))
 
     doc_players_ref = db.collection("players")
-    
+
     players = [(doc.id, doc.to_dict()) for doc in doc_players_ref.get()]
 
-    
-    #print(games[0])
     player_data = {}
     if players:
         for doc_id, player in players:
-            player_data[player[doc_id]] = player['elo']
+            player_data[doc_id] = [player['elo'], player['username']]
 
-    elo_tracker = EloTracker.new(player_data)
-    elo_tracker.process_games(games)
+
+
+    elo_tracker = EloTracker(player_data)
+    elo_tracker.process_games(verified_games)
+
+
 
     for doc_id, new_elo in player_data.items():
-        player_ref = doc_players_ref.document(doc_id)
-        player_ref.update({'elo': new_elo})
+        player_ref = db.collection("players").document(doc_id)
 
-
-
-    #write_to_file(elo_path, elo_tracker.players)
-
-
+        #print(player_ref.get())
+        player_ref.update({'elo': new_elo[0]})
