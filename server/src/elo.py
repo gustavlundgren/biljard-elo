@@ -108,10 +108,10 @@ class EloTracker:
 
 #unsafe
 #do not us 
-def process_game(game, history_path, elo_path):
-    doc_ref = db.collection("games")
+def process_game():
+    doc_games_ref = db.collection("games")
     
-    games = [doc.to_dict() for doc in doc_ref.get()]
+    games = [doc.to_dict() for doc in doc_games_ref.get()]
 
     verified_games=[]
     print("ahamdulilah")
@@ -129,18 +129,25 @@ def process_game(game, history_path, elo_path):
                 pass
                 verified_games.append(Game(winner, loser, game['time']))
 
-    #print(games)    
+    doc_players_ref = db.collection("players")
+    
+    players = [(doc.id, doc.to_dict()) for doc in doc_players_ref.get()]
+
+    
+    #print(games[0])
+    player_data = {}
+    if players:
+        for doc_id, player in players:
+            player_data[player[doc_id]] = player['elo']
+
+    elo_tracker = EloTracker.new(player_data)
+    elo_tracker.process_games(games)
+
+    for doc_id, new_elo in player_data.items():
+        player_ref = doc_players_ref.document(doc_id)
+        player_ref.update({'elo': new_elo})
 
 
-    #games = read_game_data(history_path)
-    #games.append(game)  
-    #with open(history_path, "w") as file:
-    #    json.dump(games, file, indent=4)
-        
-    #player_data = read_player_data(elo_path)
-
-    #elo_tracker = EloTracker.new(player_data)
-    #elo_tracker.process_games(games)
 
     #write_to_file(elo_path, elo_tracker.players)
 
