@@ -170,10 +170,10 @@ def new_player():
         decoded_token = auth.verify_id_token(token)
         uid = decoded_token['uid']
         
-        if len(db.collection('players').where("uid", "==", uid).get()) > 0:
+        if len(list(db.collection('players').where("uid", "==", uid).get())) > 0:
             return jsonify({'error': 'The user allready have a registered player'}), 403
         
-        if len(db.collection('players').where('username', '==', username)):
+        if len(list(db.collection('players').where('username', '==', username))):
             return jsonify({'error': 'The supplied username is taken'}), 403
 
         # Add a new player connected to a user with uid
