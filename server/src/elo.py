@@ -1,4 +1,5 @@
 import json
+from server.src import db
 import os
 
 class EloTrackerError(Exception):
@@ -21,15 +22,15 @@ def main():
     HISTORY_PATH = "./history.json"
     ELO_PATH = "./elo.json"
 
-    matches = read_match_data(HISTORY_PATH)
-    player_data = read_player_data(ELO_PATH)
+    #games = read_game_data(HISTORY_PATH)
+    #player_data = read_player_data(ELO_PATH)
 
-    elo_tracker = EloTracker.new(player_data)
-    elo_tracker.process_matches(matches)
+    #elo_tracker = EloTracker.new(player_data)
+    #elo_tracker.process_games(games)
 
-    write_to_file(ELO_PATH, elo_tracker.players)
+    #write_to_file(ELO_PATH, elo_tracker.players)
 
-    print(f"Elo ratings updated and saved to '{ELO_PATH}'")
+    #print(f"Elo ratings updated and saved to '{ELO_PATH}'")
 
 
 def read_player_data(filepath):
@@ -38,11 +39,11 @@ def read_player_data(filepath):
     except (OSError, json.JSONDecodeError) as e:
         raise Exception(f"Failed to read {filepath}: {e}")
 
-def read_match_data(filepath):    
+def read_game_data(filepath):    
     try:
         with open(filepath, "r") as file:
             history_data = file.read()
-            return [Match(**match) for match in json.loads(history_data)]
+            return [game(**game) for game in json.loads(history_data)]
     except (OSError, json.JSONDecodeError) as e:
         raise Exception(f"Failed to read {filepath}: {e}")
 
@@ -56,7 +57,7 @@ def write_to_file(file_path: str, data):
     with open(file_path, 'w') as file:
         file.write(json_data)
 
-class Match:
+class Game:
     def __init__(self, winner: str, loser: str, time: int):
         self.winner = winner
         self.loser = loser
@@ -75,9 +76,9 @@ class EloTracker:
 
 
     #@staticmethod
-    def process_matches(self, matches):
-        sorted_matches = sorted(matches, key=lambda match: match.time)
-        for m in sorted_matches:
+    def process_games(self, games):
+        sorted_games = sorted(games, key=lambda game: game.time)
+        for m in sorted_games:
             self.update_elo(m.winner, m.loser)
     
     #@staticmethod
@@ -107,15 +108,40 @@ class EloTracker:
 
 #unsafe
 #do not us 
-def process_match(match, history_path, elo_path):
-    matches = read_match_data(history_path)
-    matches.append(match)  
-    with open(history_path, "w") as file:
-        json.dump(matches, file, indent=4)
+def process_game(game, history_path, elo_path):
+    doc_ref = db.collection("games")
+    
+    games = [doc.to_dict() for doc in doc_ref.get()]
+
+    verified_games=[]
+    print("ahamdulilah")
+    print(games[0])
+
+    if games:
+        for game in games:
+            if game['verified']:
+                players = game['players']
+                winner = game['winner']
+                if players[0] == winner:
+                    loser = players[1]
+                else:
+                    loser = players[0]
+                pass
+                verified_games.append(Game(winner, loser, game['time']))
+
+    #print(games)    
+
+
+    #games = read_game_data(history_path)
+    #games.append(game)  
+    #with open(history_path, "w") as file:
+    #    json.dump(games, file, indent=4)
         
-    player_data = read_player_data(elo_path)
+    #player_data = read_player_data(elo_path)
 
-    elo_tracker = EloTracker.new(player_data)
-    elo_tracker.process_matches(matches)
+    #elo_tracker = EloTracker.new(player_data)
+    #elo_tracker.process_games(games)
 
-    write_to_file(elo_path, elo_tracker.players)
+    #write_to_file(elo_path, elo_tracker.players)
+
+
