@@ -113,4 +113,9 @@ def process_match(match, history_path, elo_path):
     with open(history_path, "w") as file:
         json.dump(matches, file, indent=4)
         
-    players = read_player_data(elo_path)
+    player_data = read_player_data(elo_path)
+
+    elo_tracker = EloTracker.new(player_data)
+    elo_tracker.process_matches(matches)
+
+    write_to_file(elo_path, elo_tracker.players)
