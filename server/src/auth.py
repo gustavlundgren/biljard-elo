@@ -7,9 +7,14 @@ auth_blueprint = Blueprint('auth', __name__)
 def login():
     data = request.json
     token = data.get('token')
+    email = data.get('email')
     
     try:
         decoded_token = auth.verify_id_token(token)
+        
+        if decoded_token['email'] != email:
+            return jsonify({'error': 'Incorrect token for this user'}), 401
+        
         return jsonify({'uid': decoded_token['uid']}), 200
     except Exception as e:
         print(str(e))

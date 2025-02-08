@@ -2,6 +2,7 @@ from flask import Blueprint, jsonify, request
 from server.src import db
 from firebase_admin import auth
 import datetime
+from elo import process_match
 
 routes_blueprint = Blueprint('routes', __name__)
 
@@ -15,7 +16,7 @@ def get_games():
     except Exception as e:
         return jsonify({'error': str(e)})
     
-@routes_blueprint.route('/api/games/player/<uid>', methods=['POST'])
+@routes_blueprint.route('/api/games/player/<uid>', methods=['GET'])
 def get_player_games(uid):
     try:
         docs = db.collection('games').where('uid', '==', uid).get()
@@ -23,7 +24,12 @@ def get_player_games(uid):
     except Exception as e:
         return jsonify({'error': str(e)})
 
-# POST    
+
+# POST
+@routes_blueprint.route('/api/game/verify/<gid>', methods=['GET'])
+def verify_game(gid):
+    pass
+        
 @routes_blueprint.route('/api/games/add', methods=['POST'])
 def add_game():
     data = request.json
@@ -31,7 +37,7 @@ def add_game():
     winner = data.get('winner')
     token = data.get('token')
     
-    if not players or not winner:
+    if len(players) != 2 or not winner:
         return jsonify({'error': 'Players and winner required'}), 400
     
     if winner not in players:
@@ -40,6 +46,19 @@ def add_game():
     if not token:
         return jsonify({'error': 'Please supply a token'}), 400
     
+    try:
+        players_ref = db.collection('players')
+        docs = players_ref.stream()
+        
+        db_players = [dp.to_dict() for dp in list(docs)]
+        db_usernames = db_players['username']
+        
+        if players[0] not in db_usernames or players[1] not in db_usernames:
+            return jsonify({'error': 'Invalid players'}), 400
+            
+    except Exception as e:
+        return jsonify({'error': str(e)})
+
     try:
         # Verify the toke from the user
         auth.verify_id_token(token)
